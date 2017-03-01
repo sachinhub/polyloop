@@ -1,0 +1,102 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-ajax/iron-ajax.html">
+<link rel="import" href="../iron-data-table/iron-data-table.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-button/paper-button.html">
+
+<!--
+`polyloop-create`
+Webcomponent to create a new record using loopback model schema
+
+@demo demo/polyloop-create.html
+-->
+
+<dom-module id="polyloop-create">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+    <h2>Enter [[modelName]]</h2>
+    <iron-ajax auto url="http://localhost:3000/api/ModelDefinitions/[[modelName]]"
+      last-response="{{modelSchema}}" on-iron-ajax-response="handleModelDefResponse">
+    </iron-ajax>
+
+    <iron-data-table items="{{modelProperties}}">
+      <data-table-column name = "Property">
+        <template>[[item.name]]</template>
+      </data-table-column>
+      <data-table-column name = "Value">
+        <template>
+            <paper-input label="[[item.name]]" value="" id="[[item.name]]"
+              on-value-changed="_setValue"/>
+        </template>
+      </data-table-column>
+    </iron-data-table>
+
+    <paper-button raised class="pink" on-tap="saveEntry">Save</paper-button>
+
+    <iron-request id="postModelEntry"
+      url="http://localhost:3000/api{{modelSchema.plural}}">
+    </iron-request>
+  </template>
+
+  <script>
+    Polymer({
+
+      is: 'polyloop-create',
+
+      properties: {
+        modelName: {
+          type: String,
+          value: 'ModelDefinition'
+        },
+        modelProperties: {
+          type: Object,
+          notify: true
+        }
+      },
+
+      ready: function() {
+          this.newEntry = {};
+      },
+
+      _toArray: function(obj) {
+        console.log('toArray function called for -', obj);
+        var array = Object.keys(obj).map (function (key){
+          return {
+            name: key,
+            type: obj[key].type,
+            value: ''
+          }
+        });
+        console.log ('Array = ', array);
+        return array;
+      },
+
+      _setValue: function(event) {
+        var fieldName = event.target.getAttribute ('id');
+        var fieldValue = event.detail.value;
+
+        this.newEntry [fieldName] = fieldValue;
+      },
+
+      handleModelDefResponse: function() {
+        console.log ('handleModelDefResponse called -', this.modelSchema);
+        this.modelProperties = this._toArray (this.modelSchema.properties);
+      },
+
+      saveEntry: function() {
+        this.$.postModelEntry.send( {
+          url: 'http://localhost:3000/api/' + this.modelSchema.plural,
+          body: JSON.stringify (this.newEntry),
+          method: 'post',
+          headers: {
+            'content-type': 'application/json'
+          }
+        });
+      }
+    });
+  </script>
+</dom-module>

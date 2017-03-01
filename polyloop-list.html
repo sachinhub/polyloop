@@ -1,0 +1,101 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-ajax/iron-ajax.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-datatable/paper-datatable-card.html">
+<link rel="import" href="../paper-datatable/paper-datatable.html">
+
+<!--
+`polyloop-list`
+Webcomponent to display list of records based on model schema.
+
+@demo demo/polyloop-list.html
+-->
+
+<dom-module id="polyloop-list">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+    <h2>[[modelSchema.plural]]</h2>
+    <!-- <paper-datatable-card header="{{modelSchema.plural}}" page-size="10"
+      id-property="name" selected-ids="{{selectedIds}}"> -->
+
+     <paper-datatable data="{{_modelEntries}}" id="records" selectable
+      multi-selection>
+        <template is="dom-repeat" items= "{{_modelProperties}}" as="field">
+        <paper-datatable-column header="{{field.name}}" sortable editable=false>
+            <template>
+            {{_getValue(item, field.name)}}
+            </template>
+         </paper-datatable-column>
+         </template>
+     </paper-datatable>
+     <!-- </paper-datatable-card> -->
+
+     <iron-ajax auto url="http://localhost:3000/api/ModelDefinitions/{{modelName}}"
+      id="getModelDefinition" last-response="{{modelSchema}}" handle-as="json"
+      on-response="_setModelProperties">
+    </iron-ajax>
+
+    <iron-ajax auto url="http://localhost:3000/api/{{modelSchema.plural}}"
+      id="getModelEntries" last-response="{{_modelEntries}}" handle-as="json"
+      on-response="_setModelEntries">
+    </iron-ajax>
+
+  </template>
+
+  <script>
+    Polymer({
+
+      is: 'polyloop-list',
+
+      properties: {
+        modelName: {
+          type: String,
+          value: 'ModelDefinition'
+        },
+        _modelProperties: {
+          type: Object,
+          notify: true
+        },
+        _modelEntries: {
+          type: Object,
+          notify: true
+        }
+      },
+
+      ready: function() {
+      },
+
+      _toArray: function(obj) {
+        console.log('toArray function called for -', obj);
+        var array = Object.keys(obj).map (function (key){
+          return {
+            name: key,
+            type: obj[key].type,
+            value: ''
+          }
+        });
+        console.log ('Array = ', array);
+        return array;
+      },
+
+      _getValue: function(record, field) {
+        console.log ('getValue called... -', record);
+        return record [field] || '_';
+      },
+
+      _setModelProperties: function (event) {
+        this.modelSchema = event.detail.response;
+        this._modelProperties = this._toArray (this.modelSchema.properties);
+      },
+
+      _setModelEntries: function (event) {
+        this._modelEntries = event.detail.response;
+      }
+    });
+  </script>
+</dom-module>
