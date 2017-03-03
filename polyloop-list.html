@@ -147,9 +147,9 @@ Webcomponent to display list of records based on model schema.
                 <paper-icon-button icon="datatable:last-page" on-tap="lastPage" disabled="[[_nextPageDisabled(page, pageSize, numberOfItems)]]"></paper-icon-button>
             </div>
         </paper-material>
-        <iron-ajax url="{{hostName}}/ModelDefinitions/{{modelName}}" id="getModelDefinition" last-response="{{modelSchema}}" handle-as="json" on-response="_setModelProperties"> </iron-ajax>
-        <iron-ajax url="{{hostName}}/{{modelSchema.plural}}/count" id="getModelCount" handle-as="json" last-response="{{_modelCount}}"> </iron-ajax>
-        <iron-ajax url="{{hostName}}/{{modelSchema.plural}}?filter=%7B%22limit%22%3A{{pageSize}}%2C%22skip%22%3A[[_getRangeStart(page, pageSize)]]%7D" id="getModelEntries" last-response="{{_modelEntries}}" handle-as="json" on-response="_setModelEntries "> </iron-ajax>
+        <iron-ajax url="{{url}}/ModelDefinitions/{{modelName}}" id="getModelDefinition" last-response="{{modelSchema}}" handle-as="json" on-response="_setModelProperties"> </iron-ajax>
+        <iron-ajax url="{{url}}/{{modelSchema.plural}}/count" id="getModelCount" handle-as="json" last-response="{{_modelCount}}"> </iron-ajax>
+        <iron-ajax url="{{url}}/{{modelSchema.plural}}?filter=%7B%22limit%22%3A{{pageSize}}%2C%22skip%22%3A[[_getRangeStart(page, pageSize)]]%7D" id="getModelEntries" last-response="{{_modelEntries}}" handle-as="json" on-response="_setModelEntries "> </iron-ajax>
     </template>
     <script>
         Polymer({
@@ -159,7 +159,7 @@ Webcomponent to display list of records based on model schema.
                     type: String
                     , value: 'ModelDefinition'
                 }
-                , hostName: {
+                , url: {
                     type: String
                 }
                 , _modelProperties: {
@@ -236,6 +236,7 @@ Webcomponent to display list of records based on model schema.
                 return (this.page - 1) * this.pageSize;
             }
             , _getRangeEnd: function () {
+                this.$.getModelEntries.generateRequest();
                 return Math.min((this.page) * this.pageSize, this.numberOfItems);
             }
             , _setNumberOfItems: function () {
@@ -246,24 +247,28 @@ Webcomponent to display list of records based on model schema.
              */
             nextPage: function () {
                 this.set("page", this.page + 1);
+                this.$.getModelEntries.generateRequest();
             }
             , /**
              * Navigate to the previous page
              */
             prevPage: function () {
                 this.set("page", this.page - 1);
+                this.$.getModelEntries.generateRequest();
             }
             , /**
              * Navigate to the first page
              */
             firstPage: function () {
                 this.set("page", 1);
+                this.$.getModelEntries.generateRequest();
             }
             , /**
              * Navigate to the last page
              */
             lastPage: function () {
                 this.set("page", Math.ceil(this.numberOfItems / this.pageSize));
+                this.$.getModelEntries.generateRequest();
             }
             , _prevPageDisabled: function () {
                 return this.page == 1;
