@@ -159,6 +159,10 @@ Webcomponent to display list of records based on model schema.
                     type: String
                     , value: 'ModelDefinition'
                 }
+                , fields: {
+                    type: Object
+                    , notify: true
+                }
                 , modelDefinitionEndPoint: {
                     type: String
                 }
@@ -204,6 +208,7 @@ Webcomponent to display list of records based on model schema.
             , ready: function () {
                 this.skip_page_content = 0;
                 console.log('In ready model name = ', this.modelName);
+                console.log("called ready");
                 this.$.getModelDefinition.generateRequest();
             }
             , _toArray: function (obj) {
@@ -247,28 +252,24 @@ Webcomponent to display list of records based on model schema.
              */
             nextPage: function () {
                 this.set("page", this.page + 1);
-                this.$.getModelEntries.generateRequest();
             }
             , /**
              * Navigate to the previous page
              */
             prevPage: function () {
                 this.set("page", this.page - 1);
-                this.$.getModelEntries.generateRequest();
             }
             , /**
              * Navigate to the first page
              */
             firstPage: function () {
                 this.set("page", 1);
-                this.$.getModelEntries.generateRequest();
             }
             , /**
              * Navigate to the last page
              */
             lastPage: function () {
                 this.set("page", Math.ceil(this.numberOfItems / this.pageSize));
-                this.$.getModelEntries.generateRequest();
             }
             , _prevPageDisabled: function () {
                 return this.page == 1;
