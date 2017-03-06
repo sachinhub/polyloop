@@ -1,0 +1,70 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-ajax/iron-ajax.html">
+<link rel="import" href="../iron-data-table/iron-data-table.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-button/paper-button.html">
+
+<!--
+`polyloop-list-item`
+Webcomponent to create a new record using loopback model schema
+
+@demo demo/polyloop-list-item.html
+-->
+
+<dom-module id="polyloop-list-item">
+    <template>
+        <style>
+            :host {
+                display: block;
+            }
+        </style>
+        <div><p>{{_data}}</p></div>
+<!--
+        <iron-data-table items="{{_data}}">
+          <data-table-column name = "Property">
+            <template>[[item.name]]</template>
+          </data-table-column>
+          <data-table-column name = "Value">
+            <template>
+                <paper-input label="[[item.name]]" value="" id="[[item.name]]"
+                  on-value-changed="_setValue"/>
+            </template>
+          </data-table-column>
+        </iron-data-table>
+-->
+
+        <iron-ajax auto url="{{modelDefinitionEndPoint}}/{{modelName}}/{{id}}" id="getDataById" last-response="{{_data}}" handle-as="json" on-response="_setRowData "> </iron-ajax>
+
+    </template>
+
+    <script>
+        Polymer({
+
+            is: 'polyloop-list-item',
+
+            properties: {
+                modelDefinitionEndPoint: {
+                    type: String,
+                    notify: true
+                },
+                modelName: {
+                    type: String,
+                    value: 'ModelDefinition',
+                    notify: true
+                },
+                id: {
+                    type: String,
+                    notify: true
+                }
+            },
+            ready: function () {
+                this.newEntry = {};
+            },
+            _setRowData: function (event) {
+            },
+            _syntaxHighlight: function (json) {
+                return JSON.stringify(json, null, 4)
+            }
+        });
+    </script>
+</dom-module>

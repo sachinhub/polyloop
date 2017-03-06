@@ -19,10 +19,11 @@
         <h3>Basic polyloop-list demo</h3>
         <demo-snippet>
             <template>
-                <polyloop-list model-definition-end-point="http://localhost:3000/api" model-name="Temperature" page-size="5" fields="{
-                                       'temperature':'Temperature',
-                                       'recordedOn':'RecordedOn'
-                                       }"></polyloop-list>
+                <polyloop-list model-definition-end-point="http://localhost:3000/api" 
+                               model-name="Temperature" 
+                               page-size="5" 
+                               fields='{"temperature":"Temp","recordedOn":"Recorded On"}'>
+                </polyloop-list>
             </template>
         </demo-snippet>
     </div>
