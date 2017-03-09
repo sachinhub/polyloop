@@ -123,6 +123,11 @@ Webcomponent to display list of records based on model schema.
                 ;
                 margin-right: 18px;
             }
+            
+            paper-dialog.size-position {
+                position: fixed;
+                overflow: auto;
+            }
         </style>
         <h2>[[modelSchema.plural]]</h2>
         <paper-datatable data="{{_modelEntries}}" id="records" on-row-tap="_showDetails">
@@ -152,9 +157,9 @@ Webcomponent to display list of records based on model schema.
         <iron-ajax url="{{modelDefinitionEndPoint}}/ModelDefinitions/{{modelName}}" id="getModelDefinition" last-response="{{modelSchema}}" handle-as="json" on-response="_setModelProperties"> </iron-ajax>
         <iron-ajax url="{{modelDefinitionEndPoint}}/{{modelSchema.plural}}/count" id="getModelCount" handle-as="json" last-response="{{_modelCount}}" on-response="_setCount"> </iron-ajax>
         <iron-ajax url="{{modelDefinitionEndPoint}}/{{modelSchema.plural}}?filter=%7B%22limit%22%3A{{pageSize}}%2C%22skip%22%3A{{skipCount}}%2C%22fields%22%3A{{keySet}}%7D" id="getModelEntries" last-response="{{_modelEntries}}" handle-as="json" on-response="_setModelEntries "> </iron-ajax>
-        <paper-dialog id="modal" modal>
-            <polyloop-list-item model-definition-end-point="{{modelDefinitionEndPoint}}" model-name="{{modelSchema.plural}}" id="{{currentId}}"></polyloop-list-item>
-            <div class="buttons">
+        <paper-dialog id="modal" modal class="position">
+            <!--            <polyloop-list-item model-definition-end-point="{{modelDefinitionEndPoint}}" model-name="{{modelSchema.plural}}" id="{{currentId}}"></polyloop-list-item>-->
+            <div class="buttons" id="buttonDiv">
                 <paper-button dialog-confirm autofocus>close</paper-button>
             </div>
         </paper-dialog>
@@ -174,6 +179,7 @@ Webcomponent to display list of records based on model schema.
                  * Limit Fields with Caption
                  * <br/>e.g. fields='{"temperature":"Temp","recordedOn":"Recorded On"}'
                  */
+                
                 , fields: {
                     type: String
                     , notify: true
@@ -181,6 +187,7 @@ Webcomponent to display list of records based on model schema.
                 /**
                  * model defination url
                  */
+                
                 , modelDefinitionEndPoint: {
                     type: String
                 }
@@ -196,28 +203,28 @@ Webcomponent to display list of records based on model schema.
                     type: Object
                     , notify: true
                 }
-                
                 /**
                  * No of items to show
                  */
+                
                 , pageSize: {
                     type: Number
                     , value: 5
                     , notify: true
                 }
-                
                 /**
                  * default opening page
                  */
+                
                 , page: {
                     type: Number
                     , value: 1
                     , notify: true
                 }
-                
                 /**
                  * Page size options
                  */
+                
                 , pageSizeOptions: {
                     type: Array
                     , value: [5, 10, 25, 100]
@@ -287,7 +294,6 @@ Webcomponent to display list of records based on model schema.
                 this._modelEntries = event.detail.response;
             }
             , _getRangeStart: function () {
-                console.log("PAge "+this.page+" "+this.pageSize);
                 return (this.page - 1) * this.pageSize;
             }
             , _getRangeEnd: function () {
@@ -343,7 +349,21 @@ Webcomponent to display list of records based on model schema.
                 return this.page * this.pageSize >= this.numberOfItems;
             }
             , _showDetails: function (element, ev) {
-                this.currentId = element.detail.item.id;
+                var data = Polymer.dom(this.$.modal).children.length;
+                if (data != 0) {
+                    for (var i = 0; i < Polymer.dom(this.$.modal).children.length; i++) {
+                        if (Polymer.dom(this.$.modal).children[i].id == "polyItem") {
+                            Polymer.dom(this.$.modal).removeChild(Polymer.dom(this.$.modal).children[i]);
+                            break;
+                        }
+                    }
+                }
+                var dynamicEl = document.createElement("polyloop-list-item");
+                dynamicEl.modelDefinitionEndPoint = this.modelDefinitionEndPoint;
+                dynamicEl.modelName = this.modelSchema.plural;
+                dynamicEl.itemId = element.detail.item[this.modelSchema.idName];
+                dynamicEl.id = "polyItem";
+                Polymer.dom(this.$.modal).appendChild(dynamicEl);
                 this.$.modal.open();
             }
         });
