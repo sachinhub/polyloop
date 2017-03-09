@@ -33,7 +33,7 @@ Webcomponent to create a new record using loopback model schema
         </iron-data-table>
 -->
 
-        <iron-ajax auto url="{{modelDefinitionEndPoint}}/{{modelName}}/{{id}}" id="getDataById" last-response="{{_data}}" handle-as="json" on-response="_setRowData "> </iron-ajax>
+        <iron-ajax url="{{modelDefinitionEndPoint}}/{{modelName}}/{{id}}" id="getDataById" last-response="{{_data}}" handle-as="json" on-response="_setRowData "> </iron-ajax>
 
     </template>
 
@@ -61,6 +61,7 @@ Webcomponent to create a new record using loopback model schema
                 this.newEntry = {};
             },
             _setRowData: function (event) {
+                this.$.getDataById.generateRequest();
             },
             _syntaxHighlight: function (json) {
                 return JSON.stringify(json, null, 4)
