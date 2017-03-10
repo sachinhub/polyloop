@@ -1,0 +1,222 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-ajax/iron-ajax.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-material/paper-material.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-datatable/paper-datatable-card.html">
+<link rel="import" href="../paper-datatable/paper-datatable.html">
+<link rel="import" href="../iron-selector/iron-selector.html">
+<!--
+`polyloop-list`
+Webcomponent to display list of records based on model schema.
+
+@demo demo/polyloop-list.html
+-->
+<dom-module id="polyloop-list">
+    <template>
+        <style>
+            :host {
+                display: block;
+            }
+            
+            paper-material {
+                border-radius: 2px;
+                background: white;
+                @apply(--paper-datatable-card);
+            }
+            
+            #selectionToolbar {
+                display: none;
+                background: var(--paper-datatable-selection-toolbar-color, --paper-pink-50);
+                @apply(--paper-datatable-selection-toolbar);
+                padding: 0px 12px 0px 24px;
+            }
+            
+            #selectionToolbar .selectionHeader,
+            #selectionToolbar .toolbar::content paper-icon-button {
+                color: var(--paper-datatable-selection-toolbar-text-color, --accent-color);
+            }
+            
+            #selectionToolbar[data-visible] {
+                display: flex;
+            }
+            
+            #selectionToolbar .toolbar {
+                display: none;
+            }
+            
+            #selectionToolbar .toolbar[data-visible] {
+                display: flex;
+            }
+            
+            #toolbar-main {
+                padding-right: 12px;
+            }
+            
+            #topBlock {
+                height: 64px;
+                padding: 0px 6px 0px 24px;
+                position: relative;
+                @apply(--paper-datatable-top-toolbar);
+            }
+            
+            #topBlock .header {
+                font-size: 20px;
+                @apply(--paper-font-common-base);
+                color: var(--paper-datatable-top-toolbar-text-color);
+            }
+            
+            #selectionToolbar >::content paper-icon-button,
+            .toolbar >::content paper-icon-button,
+            #selectionToolbar >::content paper-icon,
+            .toolbar >::content paper-icon,
+            #selectionToolbar >::content iron-icon,
+            .toolbar >::content iron-icon {
+                color: var(--paper-datatable-selection-toolbar-icon-color, rgba(0, 0, 0, .54));
+            }
+            
+            #toolbar-main::content paper-icon-button,
+            #toolbar-main::content paper-icon,
+            #toolbar-main::content iron-icon {
+                color: var(--paper-datatable-top-toolbar-icon-color);
+            }
+            
+            #topBlock .selectionHeader {
+                font-size: 16px;
+                @apply(--paper-font-common-base);
+            }
+            
+            #bottomBlock {
+                height: 56px;
+                padding: 0px 6px;
+                border-top: 1px solid var(--paper-datatable-divider-color, --divider-color);
+                color: var(--paper-datatable-navigation-bar-text-color, rgba(0, 0, 0, .54));
+                align-items: center;
+                font-size: 12px;
+                text-align: center;
+                font-weight: 500;
+                @apply(--paper-datatable-navigation-bar);
+            }
+            
+            #bottomBlock paper-dropdown-menu {
+                vertical-align: middle;
+                --paper-input-container-underline: {
+                    display: none;
+                }
+                ;
+                --paper-input-container-input: {
+                    text-align: right;
+                    font-size: 12px;
+                    font-weight: 500;
+                    color: var(--paper-datatable-navigation-bar-text-color, rgba(0, 0, 0, .54));
+                }
+                ;
+                --paper-dropdown-menu-icon: {
+                    color: var(--paper-datatable-navigation-bar-text-color, rgba(0, 0, 0, .54));
+                }
+                ;
+                margin-right: 18px;
+            }
+        </style>
+        <h2>[[modelSchema.plural]]</h2>
+        <paper-datatable data="{{_modelEntries}}" id="records" selectable multi-selection>
+            <template is="dom-repeat" items="{{_modelProperties}}" as="field">
+                <paper-datatable-column header="{{field.name}}" sortable editable=false>
+                    <template> {{_getValue(item, field.name)}} </template>
+                </paper-datatable-column>
+            </template>
+        </paper-datatable>
+        <paper-material>
+            <div class="horizontal center layout" id="bottomBlock">
+                <div class="flex"></div> <span>Rows per page:</span>
+                <paper-dropdown-menu style="width: 68px;" on-iron-select="_itemSelected">
+                    <paper-menu class="dropdown-content" selected="0">
+                        <paper-item>5</paper-item>
+                        <paper-item>10</paper-item>
+                        <paper-item>25</paper-item>
+                        <paper-item>100</paper-item>
+                    </paper-menu>
+                </paper-dropdown-menu> <span>
+            <span>{{skip_page_content}}</span>-<span>{{endNumber}}</span> of&nbsp;<span>[[_modelCount.count]]</span> </span>
+                <paper-icon-button icon="datatable:first-page" on-tap="_firstPage"></paper-icon-button>
+                <paper-icon-button icon="datatable:prev-page" on-tap="_prevPage"></paper-icon-button>
+                <paper-icon-button icon="datatable:next-page" on-tap="_nextPage"></paper-icon-button>
+                <paper-icon-button icon="datatable:last-page" role="button" tabindex="0" aria-disabled="false"></paper-icon-button>
+            </div>
+        </paper-material>
+        <iron-ajax auto url="http://localhost:3000/api/ModelDefinitions/{{modelname}}" id="getModelDefinition" last-response="{{modelSchema}}" handle-as="json" on-response="_setModelProperties"> </iron-ajax>
+        <iron-ajax auto url="http://localhost:3000/api/{{modelSchema.plural}}/count" id="getModelCount" handle-as="json" last-response="{{_modelCount}}" > </iron-ajax>
+        <iron-ajax auto url="http://localhost:3000/api/{{modelSchema.plural}}?filter=%7B%22limit%22%3A{{page_content_size}}%2C%22skip%22%3A{{skip_page_content}}%7D" id="getModelEntries" last-response="{{_modelEntries}}" handle-as="json" on-response="_setModelEntries "> </iron-ajax>
+    </template>
+    <script>
+        Polymer({
+            is: 'polyloop-list'
+            , properties: {
+                modelname: {
+                    type: String
+                    , value: 'ModelDefinition'
+                }
+                , _modelProperties: {
+                    type: Object
+                    , notify: true
+                }
+                , _modelEntries: {
+                    type: Object
+                    , notify: true
+                }
+                , _modelCount: {
+                    type: Object
+                    , notify: true
+                }
+            }
+            , ready: function () {
+                this.skip_page_content = 0;
+            }
+            , _toArray: function (obj) {
+                //                console.log('toArray function called for -', obj);
+                var array = Object.keys(obj).map(function (key) {
+                    return {
+                        name: key
+                        , type: obj[key].type
+                        , value: ''
+                    }
+                });
+                //                console.log('Array = ', array);
+                return array;
+            }
+            , _getValue: function (record, field) {
+                //                console.log('getValue called... -', record);
+                return record[field] || '_';
+            }
+            , _setModelProperties: function (event) {
+                this.modelSchema = event.detail.response;
+                this._modelProperties = this._toArray(this.modelSchema.properties);
+            }
+            , _setModelEntries: function (event) {
+                console.log(event);
+                this._modelEntries = event.detail.response;
+            }
+            , _setModelCount: function (event) {
+                console.log(event.detail);
+                //                this._modelCount = event.detail.response;
+//                this.totalCount = counterBlock.detail.count;
+            }
+            , _itemSelected: function (e) {
+                var selectedItem = e.target.selectedItem;
+                if (selectedItem) {
+                    this.page_content_size = selectedItem.innerText;
+                }
+            }
+            , _nextPage: function () {
+                this.skip_page_content = +this.skip_page_content + +this.page_content_size;
+                this.endNumber = +this.skip_page_content + +this.page_content_size;
+            }
+            , _prevPage: function () {
+                if (this.skip_page_content !== 0) this.skip_page_content = +this.skip_page_content - +this.page_content_size;
+            }
+            , _firstPage: function () {
+                this.skip_page_content = 0;
+            }
+        });
+    </script>
+</dom-module>

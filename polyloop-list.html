@@ -1,105 +1,370 @@
 <link rel="import" href="../polymer/polymer.html">
 <link rel="import" href="../iron-ajax/iron-ajax.html">
 <link rel="import" href="../paper-input/paper-input.html">
-<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-material/paper-material.html">
 <link rel="import" href="../paper-datatable/paper-datatable-card.html">
 <link rel="import" href="../paper-datatable/paper-datatable.html">
-
+<link rel="import" href="../iron-selector/iron-selector.html">
+<link rel="import" href="../paper-material/paper-material.html">
+<link rel="import" href="../paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../paper-menu/paper-menu.html">
+<link rel="import" href="../paper-item/paper-item.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../paper-dialog/paper-dialog.html">
+<link rel="import" href="../polyloop/polyloop-list-item.html">
 <!--
 `polyloop-list`
 Webcomponent to display list of records based on model schema.
-
 @demo demo/polyloop-list.html
 -->
-
 <dom-module id="polyloop-list">
-  <template>
-    <style>
-      :host {
-        display: block;
-      }
-    </style>
-    <h2>[[modelSchema.plural]]</h2>
-    <!-- <paper-datatable-card header="{{modelSchema.plural}}" page-size="10"
-      id-property="name" selected-ids="{{selectedIds}}"> -->
+    <template>
+        <style>
+            :host {
+                display: block;
+            }
 
-     <paper-datatable data="{{_modelEntries}}" id="records" selectable
-      multi-selection>
-        <template is="dom-repeat" items= "{{_modelProperties}}" as="field">
-        <paper-datatable-column header="{{field.name}}" sortable editable=false>
-            <template>
-            {{_getValue(item, field.name)}}
+            paper-material {
+                border-radius: 2px;
+                background: white;
+                @apply(--paper-datatable-card);
+            }
+
+            #selectionToolbar {
+                display: none;
+                background: var(--paper-datatable-selection-toolbar-color, --paper-pink-50);
+                @apply(--paper-datatable-selection-toolbar);
+                padding: 0px 12px 0px 24px;
+            }
+
+            #selectionToolbar .selectionHeader,
+            #selectionToolbar .toolbar::content paper-icon-button {
+                color: var(--paper-datatable-selection-toolbar-text-color, --accent-color);
+            }
+
+            #selectionToolbar[data-visible] {
+                display: flex;
+            }
+
+            #selectionToolbar .toolbar {
+                display: none;
+            }
+
+            #selectionToolbar .toolbar[data-visible] {
+                display: flex;
+            }
+
+            #toolbar-main {
+                padding-right: 12px;
+            }
+
+            #topBlock {
+                height: 64px;
+                padding: 0px 6px 0px 24px;
+                position: relative;
+                @apply(--paper-datatable-top-toolbar);
+            }
+
+            #topBlock .header {
+                font-size: 20px;
+                @apply(--paper-font-common-base);
+                color: var(--paper-datatable-top-toolbar-text-color);
+            }
+
+            #selectionToolbar >::content paper-icon-button,
+            .toolbar >::content paper-icon-button,
+            #selectionToolbar >::content paper-icon,
+            .toolbar >::content paper-icon,
+            #selectionToolbar >::content iron-icon,
+            .toolbar >::content iron-icon {
+                color: var(--paper-datatable-selection-toolbar-icon-color, rgba(0, 0, 0, .54));
+            }
+
+            #toolbar-main::content paper-icon-button,
+            #toolbar-main::content paper-icon,
+            #toolbar-main::content iron-icon {
+                color: var(--paper-datatable-top-toolbar-icon-color);
+            }
+
+            #topBlock .selectionHeader {
+                font-size: 16px;
+                @apply(--paper-font-common-base);
+            }
+
+            #bottomBlock {
+                height: 56px;
+                padding: 0px 6px;
+                border-top: 1px solid var(--paper-datatable-divider-color, --divider-color);
+                color: var(--paper-datatable-navigation-bar-text-color, rgba(0, 0, 0, .54));
+                align-items: center;
+                font-size: 12px;
+                text-align: center;
+                font-weight: 500;
+                @apply(--paper-datatable-navigation-bar);
+            }
+
+            #bottomBlock paper-dropdown-menu {
+                vertical-align: middle;
+                --paper-input-container-underline: {
+                    display: none;
+                }
+                ;
+                --paper-input-container-input: {
+                    text-align: right;
+                    font-size: 12px;
+                    font-weight: 500;
+                    color: var(--paper-datatable-navigation-bar-text-color, rgba(0, 0, 0, .54));
+                }
+                ;
+                --paper-dropdown-menu-icon: {
+                    color: var(--paper-datatable-navigation-bar-text-color, rgba(0, 0, 0, .54));
+                }
+                ;
+                margin-right: 18px;
+            }
+
+            paper-dialog.size-position {
+                position: fixed;
+                overflow: auto;
+            }
+        </style>
+        <h2>[[modelSchema.plural]]</h2>
+        <paper-datatable data="{{_modelEntries}}" id="records" on-row-tap="_showDetails">
+            <template is="dom-repeat" items="{{_modelProperties}}" as="field">
+                <paper-datatable-column header="{{_getColumnName(field.name)}}" sortable editable=false>
+                    <template> {{_getValue(item, field.name)}} </template>
+                </paper-datatable-column>
             </template>
-         </paper-datatable-column>
-         </template>
-     </paper-datatable>
-     <!-- </paper-datatable-card> -->
+        </paper-datatable>
+        <paper-material>
+            <div class="horizontal center layout" id="bottomBlock">
+                <div class="flex"></div> <span>Rows per page:</span>
+                <paper-dropdown-menu no-label-float style="width: 68px;">
+                    <paper-menu class="dropdown-content" selected="{{pageSize}}" attr-for-selected="value">
+                        <template is="dom-repeat" items="{{pageSizeOptions}}">
+                            <paper-item value="{{item}}">{{item}}</paper-item>
+                        </template>
+                    </paper-menu>
+                </paper-dropdown-menu> <span>
+					<span>[[_getRangeStart(page, pageSize)]]</span>-<span>[[_getRangeEnd(page, pageSize, numberOfItems)]]</span> of&nbsp;<span>[[numberOfItems]]</span> </span>
+                <paper-icon-button icon="datatable:first-page" on-tap="firstPage" disabled="[[_prevPageDisabled(page)]]"></paper-icon-button>
+                <paper-icon-button icon="datatable:prev-page" on-tap="prevPage" disabled="[[_prevPageDisabled(page)]]"></paper-icon-button>
+                <paper-icon-button icon="datatable:next-page" on-tap="nextPage" disabled="[[_nextPageDisabled(page, pageSize, numberOfItems)]]"></paper-icon-button>
+                <paper-icon-button icon="datatable:last-page" on-tap="lastPage" disabled="[[_nextPageDisabled(page, pageSize, numberOfItems)]]"></paper-icon-button>
+            </div>
+        </paper-material>
+        <iron-ajax url="{{modelDefinitionEndPoint}}/ModelDefinitions/{{modelName}}" id="getModelDefinition" last-response="{{modelSchema}}" handle-as="json" on-response="_setModelProperties"> </iron-ajax>
+        <iron-ajax url="{{modelDefinitionEndPoint}}/{{modelSchema.plural}}/count" id="getModelCount" handle-as="json" last-response="{{_modelCount}}" on-response="_setCount"> </iron-ajax>
+        <iron-ajax url="{{modelDefinitionEndPoint}}/{{modelSchema.plural}}?filter=%7B%22limit%22%3A{{pageSize}}%2C%22skip%22%3A{{skipCount}}%2C%22fields%22%3A{{keySet}}%7D" id="getModelEntries" last-response="{{_modelEntries}}" handle-as="json" on-response="_setModelEntries "> </iron-ajax>
+        <paper-dialog id="modal" modal class="position">
+            <!--            <polyloop-list-item model-definition-end-point="{{modelDefinitionEndPoint}}" model-name="{{modelSchema.plural}}" id="{{currentId}}"></polyloop-list-item>-->
+            <div class="buttons" id="buttonDiv">
+                <paper-button dialog-confirm autofocus>close</paper-button>
+            </div>
+        </paper-dialog>
+    </template>
+    <script>
+        Polymer({
+            is: 'polyloop-list'
+            , properties: {
+                /**
+                 * Loopback model name
+                 */
+                modelName: {
+                    type: String
+                    , value: 'ModelDefinition'
+                }
+                /**
+                 * Limit Fields with Caption
+                 * <br/>e.g. fields='{"temperature":"Temp","recordedOn":"Recorded On"}'
+                 */
 
-     <iron-ajax auto url="{{api_url}}ModelDefinitions/{{modelname}}"
-      id="getModelDefinition" last-response="{{modelSchema}}" handle-as="json"
-      on-response="_setModelProperties">
-    </iron-ajax>
+                , fields: {
+                    type: String
+                    , notify: true
+                }
+                /**
+                 * model defination url
+                 */
 
-    <iron-ajax auto url="{{api_url}}{{modelSchema.plural}}"
-      id="getModelEntries" last-response="{{_modelEntries}}" handle-as="json"
-      on-response="_setModelEntries">
-    </iron-ajax>
+                , modelDefinitionEndPoint: {
+                    type: String
+                }
+                , _modelProperties: {
+                    type: Object
+                    , notify: true
+                }
+                , _modelEntries: {
+                    type: Object
+                    , notify: true
+                }
+                , _modelCount: {
+                    type: Object
+                    , notify: true
+                }
+                /**
+                 * No of items to show
+                 */
 
-  </template>
+                , pageSize: {
+                    type: Number
+                    , value: 5
+                    , notify: true
+                }
+                /**
+                 * default opening page
+                 */
 
-  <script>
-    Polymer({
+                , page: {
+                    type: Number
+                    , value: 1
+                    , notify: true
+                }
+                /**
+                 * Page size options
+                 */
 
-      is: 'polyloop-list',
-
-      properties: {
-        api_url: {
-          type: String,
-          value: 'http://localhost:3000/api/'
-        },
-        modelname: {
-          type: String,
-          value: 'ModelDefinition'
-        },
-        _modelProperties: {
-          type: Object,
-          notify: true
-        },
-        _modelEntries: {
-          type: Object,
-          notify: true
-        }
-      },
-
-      ready: function() {
-      },
-
-      _toArray: function(obj) {
-        console.log('toArray function called for -', obj);
-        var array = Object.keys(obj).map (function (key){
-          return {
-            name: key,
-            type: obj[key].type,
-            value: ''
-          }
+                , pageSizeOptions: {
+                    type: Array
+                    , value: [5, 10, 25, 100]
+                    , notify: true
+                }
+                , _disableSave: {
+                    type: Boolean
+                    , value: false
+                }
+                , _datatable: {
+                    type: Object
+                }
+            }
+            , observers: [
+                    '_getRangeStart()'
+					, '_setNumberOfItems(_modelCount.count)'
+				]
+            , ready: function () {
+                this.skipCount = 0;
+                console.log('In ready model name = ', this.modelName);
+                this.keySet = new Object();
+                this.keys = [];
+                if (this.fields) {
+                    this.fields_data = JSON.parse(this.fields);
+                    this.keySet["id"] = true;
+                    for (var k in this.fields_data) {
+                        this.keys.push(k);
+                        this.keySet[k] = true;
+                    }
+                    this.keySet = JSON.stringify(this.keySet);
+                }
+                else {
+                    this.keySet = "{}";
+                }
+                this.$.getModelDefinition.generateRequest();
+            }
+            , _toArray: function (obj) {
+                var array = Object.keys(obj).map(function (key) {
+                    return {
+                        name: key
+                        , type: obj[key].type
+                        , value: ''
+                    }
+                });
+                return array;
+            }
+            , _getValue: function (record, field) {
+                return record[field] || '_';
+            }
+            , _setModelProperties: function (event) {
+                this.modelSchema = event.detail.response;
+                this._modelProperties = this._toArray(this.modelSchema.properties);
+                var x = [];
+                if (this.keys.length > 0) {
+                    for (var i = 0; i < this._modelProperties.length; i++) {
+                        for (var j = 0; j < this.keys.length; j++) {
+                            if (this.keys[j] == this._modelProperties[i].name) {
+                                x.push(this._modelProperties[i]);
+                            }
+                        }
+                    }
+                    this._modelProperties = x;
+                }
+                this.$.getModelCount.generateRequest();
+            }
+            , _setModelEntries: function (event) {
+                this._modelEntries = event.detail.response;
+            }
+            , _getRangeStart: function () {
+                return (this.page - 1) * this.pageSize;
+            }
+            , _getRangeEnd: function () {
+                this.$.getModelEntries.generateRequest();
+                return Math.min((this.page) * this.pageSize, this.numberOfItems);
+            }
+            , _setCount(event) {
+                this.set('numberOfItems', this._modelCount.count);
+            }
+            , _setNumberOfItems: function () {
+                this.set('numberOfItems', this._modelCount.count);
+            }
+            , _getColumnName: function (name) {
+                if (this.keys.length > 0) {
+                    return this.fields_data[name];
+                }
+                else {
+                    return name;
+                }
+            }
+            , /**
+             * Navigate to the next page
+             */
+            nextPage: function () {
+                this.skipCount = this.skipCount + this.pageSize;
+                this.set("page", this.page + 1);
+            }
+            , /**
+             * Navigate to the previous page
+             */
+            prevPage: function () {
+                this.skipCount = this.skipCount - this.pageSize;
+                this.set("page", this.page - 1);
+            }
+            , /**
+             * Navigate to the first page
+             */
+            firstPage: function () {
+                this.skipCount = 0;
+                this.set("page", 1);
+            }
+            , /**
+             * Navigate to the last page
+             */
+            lastPage: function () {
+                this.skipCount = Math.ceil(this.numberOfItems / this.pageSize) * this.pageSize - this.pageSize;
+                this.set("page", Math.ceil(this.numberOfItems / this.pageSize));
+            }
+            , _prevPageDisabled: function () {
+                return this.page == 1;
+            }
+            , _nextPageDisabled: function () {
+                return this.page * this.pageSize >= this.numberOfItems;
+            }
+            , _showDetails: function (element, ev) {
+                var data = Polymer.dom(this.$.modal).children.length;
+                if (data != 0) {
+                    for (var i = 0; i < Polymer.dom(this.$.modal).children.length; i++) {
+                        if (Polymer.dom(this.$.modal).children[i].id == "polyItem") {
+                            Polymer.dom(this.$.modal).removeChild(Polymer.dom(this.$.modal).children[i]);
+                            break;
+                        }
+                    }
+                }
+                var dynamicEl = document.createElement("polyloop-list-item");
+                dynamicEl.modelDefinitionEndPoint = this.modelDefinitionEndPoint;
+                dynamicEl.modelName = this.modelSchema.plural;
+                dynamicEl.itemId = element.detail.item[this.modelSchema.idName];
+                dynamicEl.id = "polyItem";
+                Polymer.dom(this.$.modal).appendChild(dynamicEl);
+                this.$.modal.open();
+            }
         });
-        console.log ('Array = ', array);
-        return array;
-      },
-
-      _getValue: function(record, field) {
-        console.log ('getValue called... -', record);
-        return record [field] || '_';
-      },
-
-      _setModelProperties: function (event) {
-        this.modelSchema = event.detail.response;
-        this._modelProperties = this._toArray (this.modelSchema.properties);
-      },
-
-      _setModelEntries: function (event) {
-        this._modelEntries = event.detail.response;
-      }
-    });
-  </script>
+    </script>
 </dom-module>

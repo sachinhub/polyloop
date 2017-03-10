@@ -12,7 +12,7 @@
     "paper-dropdown-menu": "^1.5.0",
     "paper-menu": "^1.2.2",
     "paper-progress": "^1.0.11",
-    "paper-radio-group": "^1.2.1"
+    "paper-dialog": "^1.1.0"
   },
   "devDependencies": {
     "iron-component-page": "PolymerElements/iron-component-page#^1.0.0",
