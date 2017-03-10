@@ -35,12 +35,12 @@ Webcomponent to display list of records based on model schema.
      </paper-datatable>
      <!-- </paper-datatable-card> -->
 
-     <iron-ajax auto url="http://localhost:3000/api/ModelDefinitions/{{modelName}}"
+     <iron-ajax auto url="{{api_url}}ModelDefinitions/{{modelname}}"
       id="getModelDefinition" last-response="{{modelSchema}}" handle-as="json"
       on-response="_setModelProperties">
     </iron-ajax>
 
-    <iron-ajax auto url="http://localhost:3000/api/{{modelSchema.plural}}"
+    <iron-ajax auto url="{{api_url}}{{modelSchema.plural}}"
       id="getModelEntries" last-response="{{_modelEntries}}" handle-as="json"
       on-response="_setModelEntries">
     </iron-ajax>
@@ -53,7 +53,11 @@ Webcomponent to display list of records based on model schema.
       is: 'polyloop-list',
 
       properties: {
-        modelName: {
+        api_url: {
+          type: String,
+          value: 'http://localhost:3000/api/'
+        },
+        modelname: {
           type: String,
           value: 'ModelDefinition'
         },
