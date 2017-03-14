@@ -15,7 +15,6 @@
 <!--
 `polyloop-list`
 Webcomponent to display list of records based on model schema.
-
 @demo demo/polyloop-list.html
 -->
 <dom-module id="polyloop-list">
@@ -24,54 +23,54 @@ Webcomponent to display list of records based on model schema.
             :host {
                 display: block;
             }
-            
+
             paper-material {
                 border-radius: 2px;
                 background: white;
                 @apply(--paper-datatable-card);
             }
-            
+
             #selectionToolbar {
                 display: none;
                 background: var(--paper-datatable-selection-toolbar-color, --paper-pink-50);
                 @apply(--paper-datatable-selection-toolbar);
                 padding: 0px 12px 0px 24px;
             }
-            
+
             #selectionToolbar .selectionHeader,
             #selectionToolbar .toolbar::content paper-icon-button {
                 color: var(--paper-datatable-selection-toolbar-text-color, --accent-color);
             }
-            
+
             #selectionToolbar[data-visible] {
                 display: flex;
             }
-            
+
             #selectionToolbar .toolbar {
                 display: none;
             }
-            
+
             #selectionToolbar .toolbar[data-visible] {
                 display: flex;
             }
-            
+
             #toolbar-main {
                 padding-right: 12px;
             }
-            
+
             #topBlock {
                 height: 64px;
                 padding: 0px 6px 0px 24px;
                 position: relative;
                 @apply(--paper-datatable-top-toolbar);
             }
-            
+
             #topBlock .header {
                 font-size: 20px;
                 @apply(--paper-font-common-base);
                 color: var(--paper-datatable-top-toolbar-text-color);
             }
-            
+
             #selectionToolbar >::content paper-icon-button,
             .toolbar >::content paper-icon-button,
             #selectionToolbar >::content paper-icon,
@@ -80,18 +79,18 @@ Webcomponent to display list of records based on model schema.
             .toolbar >::content iron-icon {
                 color: var(--paper-datatable-selection-toolbar-icon-color, rgba(0, 0, 0, .54));
             }
-            
+
             #toolbar-main::content paper-icon-button,
             #toolbar-main::content paper-icon,
             #toolbar-main::content iron-icon {
                 color: var(--paper-datatable-top-toolbar-icon-color);
             }
-            
+
             #topBlock .selectionHeader {
                 font-size: 16px;
                 @apply(--paper-font-common-base);
             }
-            
+
             #bottomBlock {
                 height: 56px;
                 padding: 0px 6px;
@@ -103,7 +102,7 @@ Webcomponent to display list of records based on model schema.
                 font-weight: 500;
                 @apply(--paper-datatable-navigation-bar);
             }
-            
+
             #bottomBlock paper-dropdown-menu {
                 vertical-align: middle;
                 --paper-input-container-underline: {
@@ -123,7 +122,7 @@ Webcomponent to display list of records based on model schema.
                 ;
                 margin-right: 18px;
             }
-            
+
             paper-dialog.size-position {
                 position: fixed;
                 overflow: auto;
@@ -179,7 +178,7 @@ Webcomponent to display list of records based on model schema.
                  * Limit Fields with Caption
                  * <br/>e.g. fields='{"temperature":"Temp","recordedOn":"Recorded On"}'
                  */
-                
+
                 , fields: {
                     type: String
                     , notify: true
@@ -187,7 +186,7 @@ Webcomponent to display list of records based on model schema.
                 /**
                  * model defination url
                  */
-                
+
                 , modelDefinitionEndPoint: {
                     type: String
                 }
@@ -206,7 +205,7 @@ Webcomponent to display list of records based on model schema.
                 /**
                  * No of items to show
                  */
-                
+
                 , pageSize: {
                     type: Number
                     , value: 5
@@ -215,7 +214,7 @@ Webcomponent to display list of records based on model schema.
                 /**
                  * default opening page
                  */
-                
+
                 , page: {
                     type: Number
                     , value: 1
@@ -224,7 +223,7 @@ Webcomponent to display list of records based on model schema.
                 /**
                  * Page size options
                  */
-                
+
                 , pageSizeOptions: {
                     type: Array
                     , value: [5, 10, 25, 100]

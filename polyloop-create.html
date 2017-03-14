@@ -2,7 +2,13 @@
 <link rel="import" href="../iron-ajax/iron-ajax.html">
 <link rel="import" href="../iron-data-table/iron-data-table.html">
 <link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-input/paper-textarea.html">
 <link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-date-picker/paper-date-picker.html">
+<link rel="import" href="../paper-radio-button/paper-radio-button.html">
+<link rel="import" href="../paper-radio-group/paper-radio-group.html">
+<link rel="import" href="../paper-input-date-picker/paper-input-date-picker.html">
+<link rel="import" href="polyloop-create.html">
 
 <!--
 `polyloop-create`
@@ -17,30 +23,64 @@ Webcomponent to create a new record using loopback model schema
       :host {
         display: block;
       }
+      .centered {
+        max-width: 800px;
+      }
+      .vertical-section-container {
+        max-width: 800px;
+      }
     </style>
     <h2>Enter [[modelName]]</h2>
-    <iron-ajax auto url="http://localhost:3000/api/ModelDefinitions/[[modelName]]"
+    <iron-ajax auto url="{{apiUrl}}ModelDefinitions/[[modelName]]"
       last-response="{{modelSchema}}" on-iron-ajax-response="handleModelDefResponse">
     </iron-ajax>
 
-    <iron-data-table items="{{modelProperties}}">
-      <data-table-column name = "Property">
-        <template>[[item.name]]</template>
-      </data-table-column>
-      <data-table-column name = "Value">
-        <template>
-            <paper-input label="[[item.name]]" value="" id="[[item.name]]"
-              on-value-changed="_setValue"/>
-        </template>
-      </data-table-column>
-    </iron-data-table>
+    <template is="dom-repeat" items="{{modelProperties}}">
+        [[item.name]] :
+          <template is="dom-if" if="{{_isNumber(item.type)}}">
+            <paper-input  auto-validate label="This input should only be numbers"
+                pattern="^[0-9]*$" error-message="Input is not a number!" id="[[item.name]]" fieldType$="[[item.type]]" on-value-changed="_setValue">
+            </paper-input>
+          </template>
+          <template is="dom-if" if="{{_isString(item.type)}}">
+            <paper-input  auto-validate label="This input should only be alphanumerics and space"
+                pattern="^[a-zA-Z0-9\-\s]+$" error-message="Not alphanumeric!" id="[[item.name]]" fieldType$="[[item.type]]" on-value-changed="_setValue" >
+            </paper-input>
+          </template>
+          <template is="dom-if" if="{{_isDate(item.type)}}">
+            <paper-input-date-picker date="2017-12-12" id="[[item.name]]" on-value-changed="_setValue" fieldType$="[[item.type]]"></paper-input-date-picker>
+          </template>
+          <template is="dom-if" if="{{_isBoolean(item.type)}}">
+            <paper-radio-group attr-for-selected="label" on-change="_toggler">
+              <paper-radio-button data-name$="[[item.name]]" label='true' >True</paper-radio-button>
+              <paper-radio-button data-name$="[[item.name]]" label='false'>False</paper-radio-button>
+            </paper-radio-group><br>
+          </template>
+          <template is="dom-if" if="{{_isArray(item.type)}}">
+            <paper-textarea  auto-validate label="This input should only be Array" id="[[item.name]]" fieldType$="[[item.type]]" on-value-changed="_setValue"></paper-textarea>
+          </template>
+          <template is="dom-if" if="{{_isGeoPoint(item.type)}}">
+            <paper-textarea  auto-validate label="This input should only be lat long data" id="[[item.name]]" fieldType$="[[item.type]]" on-value-changed="_setValue"></paper-textarea>
+            </paper-textarea>
+          </template>
+          <template is="dom-if" if="{{_isObject(item.type)}}">
+            <paper-textarea  auto-validate label="This input should only be Object" id="[[item.name]]" fieldType$="[[item.type]]" on-value-changed="_setValue"></paper-textarea>
+            </paper-textarea>
+          </template>
+          <template is="dom-if" if="{{_isOthers(item.type)}}">
+            <polyloop-create model-name = "{{item.type}}" api-url="{{apiUrl}}" id="[[item.name]]" fieldType$="[[item.type]]" on-value-changed="_setValue"></polyloop-create>
+          </template>
+      </template>
 
-    <paper-button raised class="pink" on-tap="saveEntry">Save</paper-button>
 
-    <iron-request id="postModelEntry"
-      url="http://localhost:3000/api{{modelSchema.plural}}">
-    </iron-request>
-  </template>
+        <paper-button raised class="pink" on-tap="saveEntry">Save</paper-button>
+
+      <iron-request id="postModelEntry"
+        url="{{apiUrl}}{{modelSchema.plural}}">
+      </iron-request>
+
+    </template>
+
 
   <script>
     Polymer({
@@ -48,6 +88,10 @@ Webcomponent to create a new record using loopback model schema
       is: 'polyloop-create',
 
       properties: {
+        apiUrl: {
+          type: String,
+          value: 'http://localhost:3000/api/'
+        },
         modelName: {
           type: String,
           value: 'ModelDefinition'
@@ -58,28 +102,33 @@ Webcomponent to create a new record using loopback model schema
         }
       },
 
-      ready: function() {
+      ready: function () {
           this.newEntry = {};
       },
+      _toggler:function(e)
+      {
+        //console.log("Boolean Outer", e);
+        var fieldName = event.target.getAttribute ('data-name');
+        var fieldValue = event.target.getAttribute ('label');
+        this.newEntry [fieldName] = (fieldValue=='true');
+        console.log("Boolean Outer", fieldName,fieldValue);
+        console.log ('New Entry Building up as =', this.newEntry);
 
+      },
       _toArray: function(obj) {
         console.log('toArray function called for -', obj);
         var array = Object.keys(obj).map (function (key){
           return {
-            name: key,
+              name: key,
             type: obj[key].type,
-            value: ''
+            value: '',
+            min:obj[key].min,
+            max:obj[key].max
+
           }
         });
         console.log ('Array = ', array);
         return array;
-      },
-
-      _setValue: function(event) {
-        var fieldName = event.target.getAttribute ('id');
-        var fieldValue = event.detail.value;
-
-        this.newEntry [fieldName] = fieldValue;
       },
 
       handleModelDefResponse: function() {
@@ -88,14 +137,161 @@ Webcomponent to create a new record using loopback model schema
       },
 
       saveEntry: function() {
+        console.log(this.newEntry);
         this.$.postModelEntry.send( {
-          url: 'http://localhost:3000/api/' + this.modelSchema.plural,
+          url: this.apiUrl + this.modelSchema.plural,
           body: JSON.stringify (this.newEntry),
           method: 'post',
           headers: {
             'content-type': 'application/json'
           }
         });
+      },
+
+      _setValue: function (event){
+        var fieldName = event.target.getAttribute ('id');
+        var fieldType = event.target.getAttribute ('fieldType');
+        var fieldValue = event.detail.value;
+
+        if(fieldName!=null){
+          if(fieldType.toLowerCase()=='object' || fieldType.toLowerCase()=='geopoint'){
+              this.newEntry[fieldName]= JSON.parse('{"value":"'+fieldValue+'"}');
+          }
+          else if(fieldType.toLowerCase()=="number" || fieldType.toLowerCase()=="string" || fieldType.toLowerCase()=="date" || fieldType.toLowerCase()=="boolean"){
+            this.newEntry[fieldName]= fieldValue;
+          }
+          else{
+            if (typeof fieldValue === 'object') {
+              this.newEntry[fieldName] = fieldValue;
+            }else {
+                this.newEntry[fieldName]=  fieldValue.split(",");
+            }
+          }
+        }
+        this.fire(event.type, {
+          id: this.id,
+          value: this.newEntry
+        });
+
+      },
+
+      _isNumber: function (dataType) {
+        try{
+          if(dataType.toLowerCase()=="number"){
+            console.log ('isNumber function called.')
+            return true;
+          }
+          else {
+            return false;
+          }
+        }
+          catch(err){
+            return false;
+          }
+      },
+      _isString: function (dataType) {
+        try{
+          if(dataType.toLowerCase()=="string"){
+            console.log ('isString function called.')
+            return true;
+          }
+          else {
+            return false;
+          }
+        }
+          catch(err){
+            return false;
+          }
+      },
+      _isDate: function (dataType) {
+        try{
+          if(dataType.toLowerCase()=="date"){
+            console.log ('_isDate function called.')
+            return true;
+          }
+          else {
+            return false;
+          }
+        }
+          catch(err){
+            return false;
+          }
+      },
+      _isBoolean: function (dataType) {
+        try{
+          if(dataType.toLowerCase()=="boolean"){
+            console.log ('_isBoolean function called.')
+            return true;
+          }
+          else {
+            return false;
+          }
+        }
+          catch(err){
+            return false;
+          }
+      },
+      _isArray: function (dataType) {
+        try{
+          if(dataType.toLowerCase()=="array"){
+            console.log ('_isArray function called.')
+            return true;
+          }
+          else {
+            return false;
+          }
+        }
+        catch(err){
+          if(dataType[0].toLowerCase()=="number" || dataType[0].toLowerCase()=="string" || dataType[0].toLowerCase()=="date" || dataType[0].toLowerCase()=="boolean" || dataType[0].toLowerCase()=="array" || dataType[0].toLowerCase()=="geopoint" || dataType[0].toLowerCase()=="object"){
+              console.log ('_isArray function called.' + dataType[0].toLowerCase())
+              return true;
+          }
+          else {
+            return false;
+          }
+        }
+      },
+      _isGeoPoint: function (dataType) {
+        try{
+          if(dataType.toLowerCase()=="geopoint"){
+            console.log ('_isGeoPoint function called.')
+            return true;
+          }
+          else {
+            return false;
+          }
+        }
+          catch(err){
+            return false;
+          }
+      },
+      _isObject: function (dataType) {
+        try{
+          if(dataType.toLowerCase()=="object"){
+            console.log ('_isObject function called.')
+            return true;
+          }
+          else {
+            return false;
+          }
+        }
+          catch(err){
+            return false;
+          }
+      },
+      _isOthers: function (dataType) {
+        try{
+          if(dataType.toLowerCase()!="number" && dataType.toLowerCase()!="string" && dataType.toLowerCase()!="date" && dataType.toLowerCase()!="boolean" && dataType.toLowerCase()!="array" && dataType.toLowerCase()!="geopoint" && dataType.toLowerCase()!="object"){
+            console.log ('_isOthers function called.')
+            return true;
+          }
+          else {
+            return false;
+          }
+        }
+          catch(err){
+            return false;
+          }
       }
     });
   </script>
