@@ -9,6 +9,9 @@
 <link rel="import" href="../paper-radio-group/paper-radio-group.html">
 <link rel="import" href="../paper-input-date-picker/paper-input-date-picker.html">
 <link rel="import" href="polyloop-create.html">
+<link rel="import" href="../iron-icons/iron-icons.html">
+<link rel="import" href="../iron-icon/iron-icon.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
 
 <!--
 `polyloop-create`
@@ -39,16 +42,16 @@ Webcomponent to create a new record using loopback model schema
         [[item.name]] :
           <template is="dom-if" if="{{_isNumber(item.type)}}">
             <paper-input  auto-validate label="This input should only be numbers"
-                pattern="^[0-9]*$" error-message="Input is not a number!" id="[[item.name]]" fieldType$="[[item.type]]" on-value-changed="_setValue">
+                  pattern="^[0-9]*$" error-message="Input is not a number!" id="[[item.name]]" field-type$="[[item.type]]" on-value-changed="_setValue">
             </paper-input>
           </template>
           <template is="dom-if" if="{{_isString(item.type)}}">
             <paper-input  auto-validate label="This input should only be alphanumerics and space"
-                pattern="^[a-zA-Z0-9\-\s]+$" error-message="Not alphanumeric!" id="[[item.name]]" fieldType$="[[item.type]]" on-value-changed="_setValue" >
+                pattern="^[a-zA-Z0-9\-\s]+$" error-message="Not alphanumeric!" id="[[item.name]]" field-type$="[[item.type]]" on-value-changed="_setValue" >
             </paper-input>
           </template>
           <template is="dom-if" if="{{_isDate(item.type)}}">
-            <paper-input-date-picker date="2017-12-12" id="[[item.name]]" on-value-changed="_setValue" fieldType$="[[item.type]]"></paper-input-date-picker>
+            <paper-input-date-picker date="2017-12-12" id="[[item.name]]" on-value-changed="_setValue" field-type$="[[item.type]]"></paper-input-date-picker>
           </template>
           <template is="dom-if" if="{{_isBoolean(item.type)}}">
             <paper-radio-group attr-for-selected="label" on-change="_toggler">
@@ -57,18 +60,24 @@ Webcomponent to create a new record using loopback model schema
             </paper-radio-group><br>
           </template>
           <template is="dom-if" if="{{_isArray(item.type)}}">
-            <paper-textarea  auto-validate label="This input should only be Array" id="[[item.name]]" fieldType$="[[item.type]]" on-value-changed="_setValue"></paper-textarea>
+            <template is="dom-repeat" items ="{{_displayArray(item.name)}}" as="innerItem"  index-as="position">
+              <paper-input  data-index$="[[position]]" auto-validate label="This input should only be alphanumerics and space"
+                  pattern="^[a-zA-Z0-9\-\s]+$" error-message="Not alphanumeric!" id="[[item.name]]" field-type$="[[item.type]]" on-value-changed="_setValue" ><iron-icon icon="maps:directions-bus"></iron-icon>
+              </paper-input>
+              <iron-icon icon="icons:delete" on-tap="_deleteItem" data-index$="[[position]]" id="[[item.name]]"></iron-icon>
+            </template>
+            <iron-icon icon="icons:add" on-tap="_addItem" id="[[item.name]]"></iron-icon>
           </template>
           <template is="dom-if" if="{{_isGeoPoint(item.type)}}">
-            <paper-textarea  auto-validate label="This input should only be lat long data" id="[[item.name]]" fieldType$="[[item.type]]" on-value-changed="_setValue"></paper-textarea>
+            <paper-textarea  auto-validate label="This input should only be lat long data" id="[[item.name]]" field-type$="[[item.type]]" on-value-changed="_setValue"></paper-textarea>
             </paper-textarea>
           </template>
           <template is="dom-if" if="{{_isObject(item.type)}}">
-            <paper-textarea  auto-validate label="This input should only be Object" id="[[item.name]]" fieldType$="[[item.type]]" on-value-changed="_setValue"></paper-textarea>
+            <paper-textarea  auto-validate label="This input should only be Object" id="[[item.name]]" field-type$="[[item.type]]" on-value-changed="_setValue"></paper-textarea>
             </paper-textarea>
           </template>
           <template is="dom-if" if="{{_isOthers(item.type)}}">
-            <polyloop-create model-name = "{{item.type}}" api-url="{{apiUrl}}" id="[[item.name]]" fieldType$="[[item.type]]" on-value-changed="_setValue"></polyloop-create>
+            <polyloop-create model-name = "{{item.type}}" api-url="{{apiUrl}}" id="[[item.name]]" field-type$="[[item.type]]" on-value-changed="_setValue"></polyloop-create>
           </template>
       </template>
 
@@ -99,6 +108,11 @@ Webcomponent to create a new record using loopback model schema
         modelProperties: {
           type: Object,
           notify: true
+        },
+        newEntry: {
+          type: Object,
+          notify: true,
+          value:{}
         }
       },
 
@@ -113,8 +127,43 @@ Webcomponent to create a new record using loopback model schema
         this.newEntry [fieldName] = (fieldValue=='true');
         console.log("Boolean Outer", fieldName,fieldValue);
         console.log ('New Entry Building up as =', this.newEntry);
+      },
+
+      _notifyPath:function(event){
+        console.log("Inside notifyPath",event,event.type);
+        this.notify(this.newEntry);
+      },
+      _addItem: function(event){
+        var fieldName = event.target.getAttribute ('id');
+        //var fieldType = event.target.getAttribute ('add-field-type');
+        console.log("Inside Additems and size ",event,fieldName);
+        this.push('this.newEntry.fieldName','');
+        //this.newEntry[fieldName].push("");
+        console.log("Inside Additems and size ",this.newEntry[fieldName]);
+      },
+
+      _deleteItem: function(event){
+        var fieldName = event.target.getAttribute ('id');
+        var fieldType = event.target.getAttribute ('field-type');
+        var dataIndex = event.target.getAttribute ('data-index');
+
+        //this.splice('this.newEntry[fieldName]', dataIndex, 1);
+        this.newEntry[fieldName].splice(dataIndex,1);
+        console.log("Inside Delete",event,this.newEntry[fieldName],fieldName,fieldType,dataIndex);
 
       },
+
+      _displayArray: function(attrName){
+        console.log("Inside display Array",attrName);
+        if(this.newEntry[attrName]==undefined)
+        {
+          this.newEntry[attrName]=[];
+          this.newEntry[attrName].push(null);
+        }
+        console.log("Inside displayArray",this.newEntry[attrName]);
+        return this.newEntry[attrName];
+      },
+
       _toArray: function(obj) {
         console.log('toArray function called for -', obj);
         var array = Object.keys(obj).map (function (key){
@@ -136,23 +185,13 @@ Webcomponent to create a new record using loopback model schema
         this.modelProperties = this._toArray (this.modelSchema.properties);
       },
 
-      saveEntry: function() {
-        console.log(this.newEntry);
-        this.$.postModelEntry.send( {
-          url: this.apiUrl + this.modelSchema.plural,
-          body: JSON.stringify (this.newEntry),
-          method: 'post',
-          headers: {
-            'content-type': 'application/json'
-          }
-        });
-      },
-
       _setValue: function (event){
         var fieldName = event.target.getAttribute ('id');
-        var fieldType = event.target.getAttribute ('fieldType');
+        var fieldType = event.target.getAttribute ('field-type');
+        var checkData = event.target.getAttribute ('check');
+        var dataIndex = event.target.getAttribute ('data-index');
         var fieldValue = event.detail.value;
-
+        console.log("CHECK",checkData);
         if(fieldName!=null){
           if(fieldType.toLowerCase()=='object' || fieldType.toLowerCase()=='geopoint'){
               this.newEntry[fieldName]= JSON.parse('{"value":"'+fieldValue+'"}');
@@ -164,7 +203,14 @@ Webcomponent to create a new record using loopback model schema
             if (typeof fieldValue === 'object') {
               this.newEntry[fieldName] = fieldValue;
             }else {
-                this.newEntry[fieldName]=  fieldValue.split(",");
+              if(this.newEntry[fieldName]==undefined)
+              {
+                this.newEntry[fieldName]=[];
+                this.newEntry[fieldName][dataIndex]= fieldValue;
+              }
+              else {
+                this.newEntry[fieldName][dataIndex]= fieldValue;
+              }
             }
           }
         }
@@ -172,7 +218,20 @@ Webcomponent to create a new record using loopback model schema
           id: this.id,
           value: this.newEntry
         });
+        console.log("newEntry Value",this.newEntry);
 
+      },
+
+      saveEntry: function() {
+        console.log(this.newEntry);
+        this.$.postModelEntry.send( {
+          url: this.apiUrl + this.modelSchema.plural,
+          body: JSON.stringify (this.newEntry),
+          method: 'post',
+          headers: {
+            'content-type': 'application/json'
+          }
+        });
       },
 
       _isNumber: function (dataType) {
@@ -232,8 +291,11 @@ Webcomponent to create a new record using loopback model schema
           }
       },
       _isArray: function (dataType) {
+        // var fieldName = event.target.getAttribute ('id');
+        // var fieldType = event.target.getAttribute ('fieldType');
         try{
           if(dataType.toLowerCase()=="array"){
+
             console.log ('_isArray function called.')
             return true;
           }
@@ -244,6 +306,12 @@ Webcomponent to create a new record using loopback model schema
         catch(err){
           if(dataType[0].toLowerCase()=="number" || dataType[0].toLowerCase()=="string" || dataType[0].toLowerCase()=="date" || dataType[0].toLowerCase()=="boolean" || dataType[0].toLowerCase()=="array" || dataType[0].toLowerCase()=="geopoint" || dataType[0].toLowerCase()=="object"){
               console.log ('_isArray function called.' + dataType[0].toLowerCase())
+              // if(newEntry.fieldName.size==0){
+              //     newEntry.fieldName.push("a");
+              //     newEntry.fieldName.push("b");
+              //     newEntry.fieldName.push("c");
+              //     newEntry.fieldName.push("d");
+              // }
               return true;
           }
           else {
