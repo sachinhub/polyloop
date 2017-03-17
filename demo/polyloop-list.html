@@ -8,7 +8,8 @@
     <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
     <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
     <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
-    <link rel="import" href="../polyloop-list.html">
+    <link rel="import" href="./polyloop-list-demo.html">
+
     <style is="custom-style" include="demo-pages-shared-styles">
 
     </style>
@@ -19,8 +20,7 @@
         <h3>Basic polyloop-list demo</h3>
         <demo-snippet>
             <template>
-                
-                            <polyloop-list model-definition-end-point="http://localhost:3000/api" model-name="Product" page-size=5 ></polyloop-list>
+                <polyloop-list model-definition-end-point="http://localhost:3000/CoreServices/api" model-name="Shipment"></polyloop-list>
             </template>
         </demo-snippet>
     </div>
