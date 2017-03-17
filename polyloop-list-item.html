@@ -18,8 +18,10 @@ Webcomponent to create a new record using loopback model schema
                 display: block;
             }
         </style>
-        <div><p>{{_syntaxHighlight(_data)}}</p></div>
-<!--
+        <div>
+            <p>{{_syntaxHighlight(_data)}}</p>
+        </div>
+        <!--
         <iron-data-table items="{{_data}}">
           <data-table-column name = "Property">
             <template>[[item.name]]</template>
@@ -60,11 +62,11 @@ Webcomponent to create a new record using loopback model schema
             ready: function () {
                 console.log("item ready");
                 this.newEntry = {};
-//                this.$.getDataById.generateRequest();
-                
+                //                this.$.getDataById.generateRequest();
+
             },
             _setRowData: function (event) {
-                
+
             },
             _syntaxHighlight: function (json) {
                 return JSON.stringify(json, null, 4);
