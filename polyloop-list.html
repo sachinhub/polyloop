@@ -11,11 +11,11 @@
 <link rel="import" href="../paper-item/paper-item.html">
 <link rel="import" href="../paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../paper-dialog/paper-dialog.html">
+<link rel="import" href="../iron-data-table/iron-data-table.html">
 <link rel="import" href="../polyloop/polyloop-list-item.html">
 <!--
 `polyloop-list`
 Webcomponent to display list of records based on model schema.
-
 @demo demo/polyloop-list.html
 -->
 <dom-module id="polyloop-list">
@@ -123,42 +123,53 @@ Webcomponent to display list of records based on model schema.
                 ;
                 margin-right: 18px;
             }
-            /*
-            paper-dialog.position {
+            
+            paper-dialog.size-position {
                 position: fixed;
                 overflow: auto;
             }
-*/
         </style>
         <h2>[[modelSchema.plural]]</h2>
         <paper-datatable data="{{_modelEntries}}" id="records" on-row-tap="_showDetails">
             <template is="dom-repeat" items="{{_modelProperties}}" as="field">
-                <paper-datatable-column header="{{_getColumnName(field.name)}}" sortable editable=false>
+                <paper-datatable-column header="{{field.name}}" sortable editable=false>
                     <template> {{_getValue(item, field.name)}} </template>
                 </paper-datatable-column>
             </template>
         </paper-datatable>
         <paper-material>
             <div class="horizontal center layout" id="bottomBlock">
-                <div class="flex"></div> <span>Rows per page:</span>
+                <div class="flex"></div>
+                <span>Rows per page:</span>
                 <paper-dropdown-menu no-label-float style="width: 68px;">
                     <paper-menu class="dropdown-content" selected="{{pageSize}}" attr-for-selected="value">
                         <template is="dom-repeat" items="{{pageSizeOptions}}">
                             <paper-item value="{{item}}">{{item}}</paper-item>
                         </template>
                     </paper-menu>
-                </paper-dropdown-menu> <span>
-					<span>[[_getRangeStart(page, pageSize)]]</span>-<span>[[_getRangeEnd(page, pageSize, numberOfItems)]]</span> of&nbsp;<span>[[numberOfItems]]</span> </span>
+                </paper-dropdown-menu>
+                <span>
+                  <span>[[_getRangeStart(page, pageSize)]]</span> -
+                <span>[[_getRangeEnd(page, pageSize, numberOfItems)]]</span>&nbsp;of&nbsp;
+                <span>[[numberOfItems]]</span>
+                </span>
                 <paper-icon-button icon="datatable:first-page" on-tap="firstPage" disabled="[[_prevPageDisabled(page)]]"></paper-icon-button>
                 <paper-icon-button icon="datatable:prev-page" on-tap="prevPage" disabled="[[_prevPageDisabled(page)]]"></paper-icon-button>
                 <paper-icon-button icon="datatable:next-page" on-tap="nextPage" disabled="[[_nextPageDisabled(page, pageSize, numberOfItems)]]"></paper-icon-button>
                 <paper-icon-button icon="datatable:last-page" on-tap="lastPage" disabled="[[_nextPageDisabled(page, pageSize, numberOfItems)]]"></paper-icon-button>
             </div>
         </paper-material>
-        <iron-ajax url="{{modelDefinitionEndPoint}}/ModelDefinitions/{{modelName}}" id="getModelDefinition" last-response="{{modelSchema}}" handle-as="json" on-response="_setModelProperties"> </iron-ajax>
-        <iron-ajax url="{{modelDefinitionEndPoint}}/{{modelSchema.plural}}/count" id="getModelCount" handle-as="json" last-response="{{_modelCount}}" on-response="_setCount"> </iron-ajax>
-        <iron-ajax url="{{modelDefinitionEndPoint}}/{{modelSchema.plural}}?filter=%7B%22limit%22%3A{{pageSize}}%2C%22skip%22%3A{{skipCount}}%2C%22fields%22%3A{{keySet}}%7D" id="getModelEntries" last-response="{{_modelEntries}}" handle-as="json" on-response="_setModelEntries "> </iron-ajax>
-        <paper-dialog id="modal" modal class="position" style="auto;">
+        <!-- ModelDefinition AJAX URL -->
+        <iron-ajax url="{{modelDefinitionEndPoint}}/ModelDefinitions/{{modelName}}" id="getModelDefinition" last-response="{{modelSchema}}" handle-as="json" on-response="_setModelProperties">
+        </iron-ajax>
+        <!-- Count AJAX URL -->
+        <iron-ajax url="{{modelDefinitionEndPoint}}/{{modelSchema.plural}}/count" id="getModelCount" handle-as="json" last-response="{{_modelCount}}" on-response="_setCount">
+        </iron-ajax>
+        <!-- ModelEntries AJAX URL -->
+        <iron-ajax url="{{modelDefinitionEndPoint}}/{{modelSchema.plural}}?filter=%7B%22limit%22%3A{{pageSize}}%2C%22skip%22%3A{{skipCount}}%2C%22fields%22%3A{{keySet}}%7D" id="getModelEntries" last-response="{{_modelEntries}}" handle-as="json" on-response="_setModelEntries">
+        </iron-ajax>
+        <paper-dialog id="modal" modal class="position">
+            <!--            <polyloop-list-item model-definition-end-point="{{modelDefinitionEndPoint}}" model-name="{{modelSchema.plural}}" id="{{currentId}}"></polyloop-list-item>-->
             <div class="buttons" id="buttonDiv">
                 <paper-button dialog-confirm autofocus>close</paper-button>
             </div>
@@ -169,29 +180,44 @@ Webcomponent to display list of records based on model schema.
             is: 'polyloop-list',
             properties: {
                 /**
+                 * model defination url
+                 */
+                modelDefinitionEndPoint: {
+                    type: String,
+                    notify: true
+                },
+                /**
                  * Loopback model name
                  */
                 modelName: {
                     type: String,
-                    value: 'ModelDefinition'
-                }
+                    value: 'ModelDefinition',
+                    notify: true,
+                    observer: 'modelNameChanged'
+                },
                 /**
                  * Limit Fields with Caption
                  * <br/>e.g. fields='{"temperature":"Temp","recordedOn":"Recorded On"}'
                  */
-
-                ,
                 fields: {
                     type: String,
                     notify: true
-                }
+                },
                 /**
-                 * model defination url
+                 * Page size
                  */
-
-                ,
-                modelDefinitionEndPoint: {
-                    type: String
+                pageSize: {
+                    type: Number,
+                    value: 5,
+                    notify: true
+                },
+                /**
+                 * Default page to show
+                 */
+                page: {
+                    type: Number,
+                    value: 1,
+                    notify: true
                 },
                 _modelProperties: {
                     type: Object,
@@ -204,52 +230,22 @@ Webcomponent to display list of records based on model schema.
                 _modelCount: {
                     type: Object,
                     notify: true
-                }
-                /**
-                 * No of items to show
-                 */
-
-                ,
-                pageSize: {
-                    type: Number,
-                    value: 5,
-                    notify: true
-                }
-                /**
-                 * default opening page
-                 */
-
-                ,
-                page: {
-                    type: Number,
-                    value: 1,
-                    notify: true
-                }
-                /**
-                 * Page size options
-                 */
-
-                ,
+                },
                 pageSizeOptions: {
                     type: Array,
                     value: [5, 10, 25, 100],
-                    notify: true
                 },
-                _disableSave: {
-                    type: Boolean,
-                    value: false
-                },
-                _datatable: {
-                    type: Object
-                }
+            },
+            modelNameChanged: function (data) {
+                this.modelName = data;
+                this.$.getModelDefinition.generateRequest();
             },
             observers: [
-                    '_getRangeStart()'
-					, '_setNumberOfItems(_modelCount.count)'
-				],
+                    '_getRangeStart()',
+					          '_setNumberOfItems(_modelCount.count)'
+				    ],
             ready: function () {
                 this.skipCount = 0;
-                console.log('In ready model name = ', this.modelName);
                 this.keySet = new Object();
                 this.keys = [];
                 if (this.fields) {
@@ -356,7 +352,6 @@ Webcomponent to display list of records based on model schema.
                 if (data != 0) {
                     for (var i = 0; i < Polymer.dom(this.$.modal).children.length; i++) {
                         if (Polymer.dom(this.$.modal).children[i].id == "polyItem") {
-                            console.log("Child " + Polymer.dom(this.$.modal).children[i]);
                             Polymer.dom(this.$.modal).removeChild(Polymer.dom(this.$.modal).children[i]);
                             break;
                         }

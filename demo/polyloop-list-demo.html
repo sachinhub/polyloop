@@ -1,0 +1,73 @@
+<link rel="import" href="../../polymer/polymer.html" />
+<link rel="import" href="../../paper-input/paper-input.html" />
+<link rel="import" href="../../paper-button/paper-button.html" />
+<link rel="import" href="../../polyloop/polyloop-list.html" />
+
+<dom-module id="polyloop-list-demo">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+    <paper-input label="Model Definition URL" value="{{endpoint}}" id="modelDefUrl"></paper-input>
+    <paper-input label="Model Name" value="{{name}}" id="modelName"></paper-input>
+    <paper-input label="Page Size" value="{{page}}" id="pageSize"></paper-input>
+    <paper-button raised class="indigo" on-tap="_refreshView">Refresh</paper-button>
+
+    <polyloop-list id="demoView" model-definition-end-point="" model-name="" page-size=""></polyloop-list>
+  </template>
+  <script>
+    Polymer({
+
+      is: 'polyloop-list-demo',
+
+      properties: {
+        endpoint: {
+          type: String,
+          value: 'http://localhost:3000/CoreServices/api',
+          notify: true
+        },
+        name: {
+          type: String,
+          value: 'Shipment',
+          notify: true
+        },
+        page: {
+          type: Number,
+          value: 5,
+          notify: true
+        }
+      },
+
+      _refreshView: function (event) {
+
+        this.$.demoView.modelDefinitionEndPoint = this.endpoint;
+        this.$.demoView.modelName = this.name;
+        this.$.demoView.pageSize = this.page;
+        
+        //
+        // for (var i=0; i< Polymer.dom(this.root).children.length; i++) {
+        //   console.log ('this.root.children[i].id = ', Polymer.dom(this.root).children[i].id);
+        //   if (Polymer.dom(this.root).children[i].id === 'demoView') {
+        //     console.log ('REMOVING');
+        //     Polymer.dom(this.root).removeChild (Polymer.dom(this.root).children[i]);
+        //   }
+        // }
+        //
+        // var tmpl = document.createElement('template', 'dom-bind')
+
+        // var dynamicEl = this.$.demoView
+        // // console.log ('this.modelDefinitionEndPoint = ', this.modelDefinitionEndPoint);
+        // dynamicEl.setAttribute ('model-definition-end-point', this.modelDefinitionEndPoint);
+        // dynamicEl.setAttribute ('model-name', this.modelName);
+        // dynamicEl.setAttribute ('page-size',this.pageSize);
+        // dynamicEl.setAttribute ( 'id', 'demoView');
+
+        // console.log ('Dynamic el =', dynamicEl);
+        // tmpl.appendChild (dynamicEl);
+        // Polymer.dom(this.root).appendChild(tmpl);
+      }
+    });
+  </script>
+</dom-module>
