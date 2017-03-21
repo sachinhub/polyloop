@@ -121,3 +121,14 @@ Your application is already set up to be tested via [web-component-tester](https
 
 ## polyloop components
 
+This project has following webcomponents  -
+
+### polyloop-list
+Web component for listing model data based on the schema in a tabular fashion. This component on load gets the model schema using ModelDefinition API and decides the columns to be displayed. Then it paginates the records by calling the GET api using model's plural.
+
+See polyloop-list documentation and demo for more details on the configuration attributes supported.
+
+### polylist-create
+Web component for creating new record. This component on load gets the model schema and paints a form view based on it. The form input elements are selected based on the type of the model property. e.g. for 'string' type of property 'paper-input' is used whereas for 'date' type of property 'paper-date-picker' is used.
+
+The elements also adds validation logic in the form ui based on the schema configuration. e.g. if property is marked as 'requried' it will automatically add that validation before allowing to save the record.
