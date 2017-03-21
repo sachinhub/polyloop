@@ -62,8 +62,8 @@ These webcomponents require an API which can emit loopback model definition in f
 ### Setting up ModelDefinition API in your loopback project
 This project packages the required files to setup ModelDefinition API in your loopback project. Please follow these steps - 
 
-#### Copy loopback/ModelDefinition.json to common/models
-#### Add entry in model-config.json as below
+#### 1 - Copy loopback/ModelDefinition.json to common/models
+#### 2 - Add entry in model-config.json as below
 ```
 "ModelDefinition": {
     "dataSource": "db",
@@ -71,10 +71,10 @@ This project packages the required files to setup ModelDefinition API in your lo
   }
  ```
  
- #### Copy loopback/load-models-in-db.js into server/boot folder
+ #### 3 - Copy loopback/load-models-in-db.js into server/boot folder
  This boot script loads existings models into the database at the startup.
  
- #### Override ModelBuilder's define method to capture model properties 
+ #### 4 - Override ModelBuilder's define method to capture model properties 
 Add below lines in server/server.js before app.start () call to override the ModelBuilder.define () method to capture model properties. This will be used by load-models-in-db.js script while storing the details in database.
 ```
 const ModelBuilder = require('loopback-datasource-juggler').ModelBuilder;
