@@ -11,6 +11,54 @@ First, make sure you have the [Polymer CLI](https://www.npmjs.com/package/polyme
 ```
 $ polymer serve
 ```
+## Prerequsites
+These webcomponents require an API which can emit loopback model definition in following format - 
+```
+{
+  "properties": {                       // Model properties as in the JSON file of loopback model.
+    "code": {
+      "id": true,
+      "required": true,
+      "type": "string",
+      "comment": "checkpoint code"      // Comment is optional.
+    },
+    "name": {
+      "type": "string",
+      "comment": "name of the checkpoint"
+    },
+    "location": {
+      "required": true,
+      "type": "string",
+      "comment": "checkpoint location - Station/Field"
+    },
+    "category": {
+      "required": true,
+      "type": "string",
+      "comment": "Category of the checkpoint- one of IC, NP, NI, NC"
+    },
+    "handlingType": {
+      "required": true,
+      "type": "string",
+      "comment": "handling type - delivery, pickup, mfnpickup"
+    },
+    "reasonCodes": {
+      "type": [
+        "string"
+      ],
+      "comment": "reasons on which this code can occur"
+    }
+  },
+  "readonly": false,
+  "name": "CheckpointMaster",                             // Name of the model.
+  "strict": false,
+  "public": true,
+  "idInjection": false,
+  "validateUpsert": false,
+  "dataSourceName": "db",
+  "idName": "code"                                        // Name of the ID field.
+}
+```
+
 
 ## Building Your Application
 
